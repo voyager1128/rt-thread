@@ -63,6 +63,11 @@ rt_hw_context_switch_to:
     bl      rt_cpus_lock_status_restore
 #endif /*RT_USING_SMP*/
 
+#ifdef RT_USING_LWP
+    ldmfd sp, {r13, r14}^   @ pop usr_sp usr_lr
+    add sp, #8
+#endif
+
     ldmfd sp!, {r4}         @ pop new task spsr
     msr spsr_cxsf, r4
 
@@ -89,6 +94,11 @@ rt_hw_context_switch:
 
     stmfd sp!, {r4}         @ push cpsr
 
+#ifdef RT_USING_LWP
+    stmfd sp, {r13, r14}^   @ push usr_sp usr_lr
+    sub sp, #8
+#endif
+
     str sp, [r0]            @ store sp in preempted tasks TCB
     ldr sp, [r1]            @ get new task stack pointer
 
@@ -97,12 +107,17 @@ rt_hw_context_switch:
     bl      rt_cpus_lock_status_restore
 #endif /*RT_USING_SMP*/
 
+#ifdef RT_USING_LWP
+    ldmfd sp, {r13, r14}^   @ pop usr_sp usr_lr
+    add sp, #8
+#endif
+
     ldmfd sp!, {r4}         @ pop new task cpsr to spsr
     msr spsr_cxsf, r4
     ldmfd sp!, {r0-r12, lr, pc}^  @ pop new task r0-r12, lr & pc, copy spsr to cpsr
 
 /*
- * void rt_hw_context_switch_interrupt(rt_uint32 from, rt_uint32 to);
+ * void rt_hw_context_switch_interrupt(rt_ubase_t from, rt_ubase_t to);
  */
 .equ Mode_USR,        0x10
 .equ Mode_FIQ,        0x11
@@ -142,6 +157,11 @@ rt_hw_context_switch_interrupt:
     stmfd   sp!, {r4-r7}    @ push old task's r0-r3
     stmfd   sp!, {r3}       @ push old task's cpsr
 
+#ifdef RT_USING_LWP
+    stmfd sp, {r13,r14}^    @push usr_sp usr_lr
+    sub sp, #8
+#endif
+
     msr     cpsr_c, #I_Bit|F_Bit|Mode_IRQ
     pop     {r1 - r3}
     mov     sp, r0
@@ -151,6 +171,11 @@ rt_hw_context_switch_interrupt:
     ldr     sp, [r2]
     mov     r0, r3
     bl      rt_cpus_lock_status_restore
+
+#ifdef RT_USING_LWP
+    ldmfd sp, {r13,r14}^  @pop usr_sp usr_lr
+    add sp, #8
+#endif
 
     ldmfd   sp!, {r4}       @ pop new task's cpsr to spsr
     msr     spsr_cxsf, r4

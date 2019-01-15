@@ -5,6 +5,9 @@ ARCH='arm'
 CPU='cortex-m4'
 CROSS_TOOL='gcc'
 
+# bsp lib config
+BSP_LIBRARY_TYPE = None
+
 if os.getenv('RTT_CC'):
     CROSS_TOOL = os.getenv('RTT_CC')
 if os.getenv('RTT_ROOT'):
@@ -33,6 +36,7 @@ if PLATFORM == 'gcc':
     CC = PREFIX + 'gcc'
     AS = PREFIX + 'gcc'
     AR = PREFIX + 'ar'
+    CXX = PREFIX + 'g++'
     LINK = PREFIX + 'gcc'
     TARGET_EXT = 'elf'
     SIZE = PREFIX + 'size'
